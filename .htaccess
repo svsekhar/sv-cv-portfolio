@@ -1,0 +1,32 @@
+Options -Indexes
+
+# Block access to sensitive and backup files
+<FilesMatch "(^\.|\.env$|\.ini$|\.log$|\.sql$|\.bak$|\.old$|\.orig$|\.save$|\.swp$|\.dist$|composer\.(json|lock)$|phpunit\.xml$)">
+    Require all denied
+</FilesMatch>
+
+# Enable URL rewriting
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Force HTTPS
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+    # Redirect direct .php requests to clean URLs
+    RewriteCond %{THE_REQUEST} \s/+(.+?)\.php(?:[?\s]) [NC]
+    RewriteRule ^(.+?)\.php$ /$1 [R=301,L,NE]
+
+    # Internally load .php files when a clean URL is requested
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^([^/]+)/?$ $1.php [L]
+</IfModule>
+
+# Basic security headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
